@@ -1,7 +1,7 @@
 import groovy.json.JsonSlurper
 
 buildscript {
-    ext.kotlin_version = '1.3.50'
+    ext.kotlin_version = '1.6.10'
     def isChina = false
     try {
         def connection = new URL('https://api.ip.sb/geoip').openConnection()
