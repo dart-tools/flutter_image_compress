@@ -66,6 +66,14 @@ class _MyAppState extends State<MyApp> {
               aspectRatio: 1 / 1,
             ),
             TextButton(
+              child: Text('Crop file'),
+              onPressed: _testCropFile,
+            ),
+            TextButton(
+              child: Text('Crop list'),
+              onPressed: cropListExample,
+            ),
+            TextButton(
               child: Text('CompressFile and rotate 180'),
               onPressed: _testCompressFile,
             ),
@@ -146,6 +154,51 @@ class _MyAppState extends State<MyApp> {
     setState(() {});
   }
 
+  void _testCropFile() async {
+    final img = AssetImage("img/img.jpg");
+    print("pre compress");
+    final config = new ImageConfiguration();
+
+    AssetBundleImageKey key = await img.obtainKey(config);
+    final ByteData data = await key.bundle.load(key.name);
+    final dir = await path_provider.getTemporaryDirectory();
+    print('dir = $dir');
+
+    File file = createFile("${dir.absolute.path}/test.png");
+    file.writeAsBytesSync(data.buffer.asUint8List());
+
+    final result = await testCropFile(file);
+
+    if (result == null) return;
+
+    ImageProvider provider = MemoryImage(result);
+    this.provider = provider;
+    setState(() {});
+  }
+
+  Future cropListExample() async {
+    final data = await rootBundle.load("img/img.jpg");
+
+    final memory = await testCropList(data.buffer.asUint8List());
+
+    setState(() {
+      this.provider = MemoryImage(memory);
+    });
+  }
+
+  Future<Uint8List> testCropList(Uint8List list) async {
+    final result = await FlutterImageCompress.compressWithList(
+      list,
+      width: 2000,
+      height: 2327,
+      quality: 96,
+      format: CompressFormat.webp,
+    );
+    print(list.length);
+    print(result.length);
+    return result;
+  }
+
   File createFile(String path) {
     final file = File(path);
     if (!file.existsSync()) {
@@ -193,12 +246,25 @@ class _MyAppState extends State<MyApp> {
     setState(() {});
   }
 
+  Future<Uint8List?> testCropFile(File file) async {
+    print("testCompressFile");
+    final result = await FlutterImageCompress.compressWithFile(
+      file.absolute.path,
+      width: 2000,
+      height: 2327,
+      quality: 94,
+    );
+    print(file.lengthSync());
+    print(result?.length);
+    return result;
+  }
+
   Future<Uint8List?> testCompressFile(File file) async {
     print("testCompressFile");
     final result = await FlutterImageCompress.compressWithFile(
       file.absolute.path,
-      minWidth: 2300,
-      minHeight: 1500,
+      width: 2300,
+      height: 1500,
       quality: 94,
       rotate: 180,
     );
@@ -213,8 +279,8 @@ class _MyAppState extends State<MyApp> {
       file.absolute.path,
       targetPath,
       quality: 90,
-      minWidth: 1024,
-      minHeight: 1024,
+      width: 1024,
+      height: 1024,
       rotate: 90,
     );
 
@@ -228,8 +294,8 @@ class _MyAppState extends State<MyApp> {
     print("testCompressAsset");
     final list = await FlutterImageCompress.compressAssetImage(
       assetName,
-      minHeight: 1920,
-      minWidth: 1080,
+      height: 1920,
+      width: 1080,
       quality: 96,
       rotate: 135,
     );
@@ -253,8 +319,8 @@ class _MyAppState extends State<MyApp> {
   Future<Uint8List> testComporessList(Uint8List list) async {
     final result = await FlutterImageCompress.compressWithList(
       list,
-      minHeight: 1080,
-      minWidth: 1080,
+      height: 1080,
+      width: 1080,
       quality: 96,
       rotate: 270,
       format: CompressFormat.webp,
@@ -272,7 +338,7 @@ class _MyAppState extends State<MyApp> {
   void _compressAssetAndAutoRotate() async {
     final result = await FlutterImageCompress.compressAssetImage(
       R.IMG_AUTO_ANGLE_JPG,
-      minWidth: 1000,
+      width: 1000,
       quality: 95,
       // autoCorrectionAngle: false,
     );
@@ -287,8 +353,8 @@ class _MyAppState extends State<MyApp> {
   void _compressPngImage() async {
     final result = await FlutterImageCompress.compressAssetImage(
       R.IMG_HEADER_PNG,
-      minWidth: 300,
-      minHeight: 500,
+      width: 300,
+      height: 500,
     );
 
     if (result == null) return;
@@ -303,8 +369,8 @@ class _MyAppState extends State<MyApp> {
         await getAssetImageUint8List(R.IMG_TRANSPARENT_BACKGROUND_PNG);
     final result = await FlutterImageCompress.compressWithList(
       bytes,
-      minHeight: 100,
-      minWidth: 100,
+      height: 100,
+      width: 100,
       format: CompressFormat.png,
     );
 
@@ -321,8 +387,8 @@ class _MyAppState extends State<MyApp> {
   void _compressImageAndKeepExif() async {
     final result = await FlutterImageCompress.compressAssetImage(
       R.IMG_AUTO_ANGLE_JPG,
-      minWidth: 500,
-      minHeight: 600,
+      width: 500,
+      height: 600,
       // autoCorrectionAngle: false,
       keepExif: true,
     );
@@ -375,8 +441,8 @@ class _MyAppState extends State<MyApp> {
       srcPath,
       target,
       format: CompressFormat.webp,
-      minHeight: 800,
-      minWidth: 800,
+      height: 800,
+      width: 800,
       quality: quality,
     );
 

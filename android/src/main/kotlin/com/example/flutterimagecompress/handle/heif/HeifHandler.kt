@@ -20,22 +20,22 @@ class HeifHandler : FormatHandler {
   override val typeName: String
     get() = "heif"
 
-  override fun handleByteArray(context: Context, byteArray: ByteArray, outputStream: OutputStream, minWidth: Int, minHeight: Int, quality: Int, rotate: Int, keepExif: Boolean, inSampleSize: Int) {
+  override fun handleByteArray(context: Context, byteArray: ByteArray, outputStream: OutputStream, width: Int?, height: Int?, quality: Int, rotate: Int, keepExif: Boolean, inSampleSize: Int) {
     val tmpFile = TmpFileUtil.createTmpFile(context)
-    compress(byteArray, minWidth, minHeight, quality, rotate, inSampleSize, tmpFile.absolutePath)
+    compress(byteArray, width, height, quality, rotate, inSampleSize, tmpFile.absolutePath)
     outputStream.write(tmpFile.readBytes())
   }
 
-  private fun compress(arr: ByteArray, minWidth: Int, minHeight: Int, quality: Int, rotate: Int = 0, inSampleSize: Int, targetPath: String) {
+  private fun compress(arr: ByteArray, width: Int?, height: Int?, quality: Int, rotate: Int = 0, inSampleSize: Int, targetPath: String) {
     val options = makeOption(inSampleSize)
     val bitmap = BitmapFactory.decodeByteArray(arr, 0, arr.count(), options)
-    convertToHeif(bitmap, minWidth, minHeight, rotate, targetPath, quality)
+    convertToHeif(bitmap, width, height, rotate, targetPath, quality)
   }
 
-  private fun compress(path: String, minWidth: Int, minHeight: Int, quality: Int, rotate: Int = 0, inSampleSize: Int, targetPath: String) {
+  private fun compress(path: String, width: Int?, height: Int?, quality: Int, rotate: Int = 0, inSampleSize: Int, targetPath: String) {
     val options = makeOption(inSampleSize)
     val bitmap = BitmapFactory.decodeFile(path, options)
-    convertToHeif(bitmap, minWidth, minHeight, rotate, targetPath, quality)
+    convertToHeif(bitmap, width, height, rotate, targetPath, quality)
   }
 
   private fun makeOption(inSampleSize: Int): BitmapFactory.Options {
@@ -50,16 +50,17 @@ class HeifHandler : FormatHandler {
     return options
   }
 
-  private fun convertToHeif(bitmap: Bitmap, minWidth: Int, minHeight: Int, rotate: Int, targetPath: String, quality: Int) {
+  private fun convertToHeif(bitmap: Bitmap, width: Int?, height: Int?, rotate: Int, targetPath: String, quality: Int) {
     val w = bitmap.width.toFloat()
     val h = bitmap.height.toFloat()
 
     log("src width = $w")
     log("src height = $h")
 
-    val scale = bitmap.calcScale(minWidth, minHeight)
+    val newHeight = height ?: ((h / w) * width!!).toInt()
+    val newWidth = width ?: ((w / h) * newHeight).toInt()
 
-    log("scale = $scale")
+    val scale = bitmap.calcScale(newWidth, newHeight)
 
     val destW = w / scale
     val destH = h / scale
@@ -67,8 +68,14 @@ class HeifHandler : FormatHandler {
     log("dst width = $destW")
     log("dst height = $destH")
 
-    val result = Bitmap.createScaledBitmap(bitmap, destW.toInt(), destH.toInt(), true)
+    var result = Bitmap.createScaledBitmap(bitmap, destW.toInt(), destH.toInt(), true)
             .rotate(rotate)
+
+    if(newWidth.toFloat() / newHeight.toFloat() != w / h) {
+      var targetY = ((destH - newHeight) / 2).toInt();
+      var targetX = ((destW - newWidth) / 2).toInt();
+      result = Bitmap.createBitmap(result, targetX, targetY, newWidth, newHeight)
+    }
 
     val heifWriter = HeifWriter.Builder(targetPath, result.width, result.height, HeifWriter.INPUT_MODE_BITMAP)
             .setQuality(quality)
@@ -82,9 +89,9 @@ class HeifHandler : FormatHandler {
     heifWriter.close()
   }
 
-  override fun handleFile(context: Context, path: String, outputStream: OutputStream, minWidth: Int, minHeight: Int, quality: Int, rotate: Int, keepExif: Boolean, inSampleSize: Int,numberOfRetries:Int) {
+  override fun handleFile(context: Context, path: String, outputStream: OutputStream, width: Int?, height: Int?, quality: Int, rotate: Int, keepExif: Boolean, inSampleSize: Int,numberOfRetries:Int) {
     val tmpFile = TmpFileUtil.createTmpFile(context)
-    compress(path, minWidth, minHeight, quality, rotate, inSampleSize, tmpFile.absolutePath)
+    compress(path, width, height, quality, rotate, inSampleSize, tmpFile.absolutePath)
     outputStream.write(tmpFile.readBytes())
   }
 }

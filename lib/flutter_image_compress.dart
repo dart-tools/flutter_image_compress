@@ -51,8 +51,8 @@ class FlutterImageCompress {
   /// Compress image from [Uint8List] to [Uint8List].
   static Future<Uint8List> compressWithList(
     Uint8List image, {
-    int minWidth = 1920,
-    int minHeight = 1080,
+    int? width,
+    int? height,
     int quality = 95,
     int rotate = 0,
     int inSampleSize = 1,
@@ -63,6 +63,9 @@ class FlutterImageCompress {
     if (image.isEmpty) {
       throw "The image is empty.";
     }
+    if (width == null && height == null) {
+      throw "You need to specify either one or both of width and height parameters";
+    }
 
     final support = await _validator.checkSupportPlatform(format);
     if (!support) {
@@ -71,8 +74,8 @@ class FlutterImageCompress {
 
     final result = await _channel.invokeMethod("compressWithList", [
       image,
-      minWidth,
-      minHeight,
+      width,
+      height,
       quality,
       rotate,
       autoCorrectionAngle,
@@ -87,8 +90,8 @@ class FlutterImageCompress {
   /// Compress file of [path] to [Uint8List].
   static Future<Uint8List?> compressWithFile(
     String path, {
-    int minWidth = 1920,
-    int minHeight = 1080,
+    int? width,
+    int? height,
     int inSampleSize = 1,
     int quality = 95,
     int rotate = 0,
@@ -97,6 +100,9 @@ class FlutterImageCompress {
     bool keepExif = false,
     int numberOfRetries = 5,
   }) async {
+    if (width == null && height == null) {
+      throw "You need to specify either one or both of width and height parameters";
+    }
     if (numberOfRetries <= 0) {
       throw "numberOfRetries can't be null or less than 0";
     }
@@ -111,8 +117,8 @@ class FlutterImageCompress {
 
     final result = await _channel.invokeMethod("compressWithFile", [
       path,
-      minWidth,
-      minHeight,
+      width,
+      height,
       quality,
       rotate,
       autoCorrectionAngle,
@@ -128,8 +134,8 @@ class FlutterImageCompress {
   static Future<File?> compressAndGetFile(
     String path,
     String targetPath, {
-    int minWidth = 1920,
-    int minHeight = 1080,
+    int? width,
+    int? height,
     int inSampleSize = 1,
     int quality = 95,
     int rotate = 0,
@@ -138,6 +144,9 @@ class FlutterImageCompress {
     bool keepExif = false,
     int numberOfRetries = 5,
   }) async {
+    if (width == null && height == null) {
+      throw "You need to specify either one or both of width and height parameters";
+    }
     if (numberOfRetries <= 0) {
       throw "numberOfRetries can't be null or less than 0";
     }
@@ -157,8 +166,8 @@ class FlutterImageCompress {
     final String? result =
         await _channel.invokeMethod("compressWithFileAndGetFile", [
       path,
-      minWidth,
-      minHeight,
+      width,
+      height,
       quality,
       targetPath,
       rotate,
@@ -179,8 +188,8 @@ class FlutterImageCompress {
   /// From [asset] to [Uint8List]
   static Future<Uint8List?> compressAssetImage(
     String assetName, {
-    int minWidth = 1920,
-    int minHeight = 1080,
+    int? width,
+    int? height,
     int quality = 95,
     int rotate = 0,
     bool autoCorrectionAngle = true,
@@ -206,8 +215,8 @@ class FlutterImageCompress {
 
     return compressWithList(
       uint8List,
-      minHeight: minHeight,
-      minWidth: minWidth,
+      width: width,
+      height: height,
       quality: quality,
       rotate: rotate,
       autoCorrectionAngle: autoCorrectionAngle,
