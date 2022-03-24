@@ -74,12 +74,13 @@ class CommonHandler(override val type: Int) : FormatHandler {
     val newHeight = height ?: ((h / w) * width!!).toInt()
     val newWidth = width ?: ((w / h) * newHeight).toInt()
 
-    val scale = bitmap.calcScale(newWidth, newHeight)
+    var scale = bitmap.calcScale(newWidth, newHeight)
 
     log("scale = $scale")
 
-    val destW = w / scale
-    val destH = h / scale
+    var destW = w / scale
+    var destH = h / scale
+
 
     log("dst width = $destW")
     log("dst height = $destH")
@@ -113,17 +114,49 @@ class CommonHandler(override val type: Int) : FormatHandler {
       val w = bitmap.width.toFloat()
       val h = bitmap.height.toFloat()
 
-      val newHeight = height ?: ((h / w) * width!!).toInt()
-      val newWidth = width ?: ((w / h) * newHeight).toInt()
+      
+      log("src width = $w")
+      log("src height = $h")
 
-      val scale = bitmap.calcScale(newWidth, newHeight)
+      log("input width = $width")
+      log("input height = $height")
 
-      val destW = w / scale
-      val destH = h / scale
+      var intendedWidth = width?.toInt()
+      var intendedHeight = height?.toInt()
+      if(intendedWidth != null && intendedWidth > w) {
+        intendedWidth = w.toInt()
+        if(intendedHeight != null) {
+          intendedHeight = ((height!!.toFloat() / width!!.toFloat()) * intendedWidth!!).toInt()
+        }
+      }
+      if(intendedHeight != null && intendedHeight > h) {
+        intendedHeight = h.toInt()
+        if(intendedWidth != null) {
+          intendedWidth = ((width!!.toFloat() / height!!.toFloat()) * intendedHeight!!).toInt()
+        }
+      }
+
+      log("intendedWidth = $intendedWidth")
+      log("intendedHeight = $intendedHeight")
+
+      val newHeight = intendedHeight ?: ((h / w) * intendedWidth!!).toInt()
+      val newWidth = intendedWidth ?: ((w / h) * newHeight).toInt()
+
+      var scale = bitmap.calcScale(newWidth, newHeight)
+
+      var destW = w / scale
+      var destH = h / scale
+
+      log("dst width = $destW")
+      log("dst height = $destH")
 
       if(newWidth.toFloat() / newHeight.toFloat() != w / h) {
         var targetX = (scale * (destW - newWidth) / 2).toInt();
         var targetY = (scale * (destH - newHeight) / 2).toInt();
+
+        log("targetX = $targetX")
+        log("targetY = $targetY")
+        
         bitmap = Bitmap.createBitmap(bitmap, targetX, targetY, (scale * newWidth).toInt(), (scale * newHeight).toInt())
       }
 
